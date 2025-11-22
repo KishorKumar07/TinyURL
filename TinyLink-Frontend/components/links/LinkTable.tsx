@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { format } from 'date-fns';
-import { ExternalLink, Trash2, BarChart3 } from 'lucide-react';
+import { ExternalLink, Trash2, BarChart3, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -42,6 +42,21 @@ export const LinkTable: React.FC<LinkTableProps> = ({ links }) => {
     return url.substring(0, maxLength) + '...';
   };
 
+  const isExpired = (expiresAt: string | null | undefined): boolean => {
+    if (!expiresAt) return false;
+    return new Date(expiresAt) < new Date();
+  };
+
+  const getExpirationStatus = (link: Link) => {
+    if (!link.expiresAt) return null;
+    const expired = isExpired(link.expiresAt);
+    return {
+      expired,
+      date: link.expiresAt,
+      formatted: format(new Date(link.expiresAt), 'MMM d, yyyy HH:mm'),
+    };
+  };
+
   if (links.length === 0) {
     return (
       <div className="card text-center py-12">
@@ -68,6 +83,9 @@ export const LinkTable: React.FC<LinkTableProps> = ({ links }) => {
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                 Created
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                Expires
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
                 Actions
@@ -104,6 +122,31 @@ export const LinkTable: React.FC<LinkTableProps> = ({ links }) => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                   {format(new Date(link.createdAt), 'MMM d, yyyy')}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {(() => {
+                    const expiration = getExpirationStatus(link);
+                    if (!expiration) {
+                      return <span className="text-sm text-gray-500">Never</span>;
+                    }
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Clock
+                          className={`w-4 h-4 ${
+                            expiration.expired ? 'text-red-400' : 'text-yellow-400'
+                          }`}
+                        />
+                        <span
+                          className={`text-sm ${
+                            expiration.expired ? 'text-red-400' : 'text-yellow-400'
+                          }`}
+                          title={expiration.formatted}
+                        >
+                          {expiration.expired ? 'Expired' : expiration.formatted}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right">
                   <div className="flex items-center justify-end gap-2">
@@ -155,13 +198,35 @@ export const LinkTable: React.FC<LinkTableProps> = ({ links }) => {
               </div>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
                 <span className="text-gray-400">
                   <span className="font-medium text-white">{link.clicks}</span> clicks
                 </span>
                 <span className="text-gray-500">
                   {format(new Date(link.createdAt), 'MMM d, yyyy')}
                 </span>
+                {(() => {
+                  const expiration = getExpirationStatus(link);
+                  if (expiration) {
+                    return (
+                      <div className="flex items-center gap-1">
+                        <Clock
+                          className={`w-3 h-3 ${
+                            expiration.expired ? 'text-red-400' : 'text-yellow-400'
+                          }`}
+                        />
+                        <span
+                          className={expiration.expired ? 'text-red-400' : 'text-yellow-400'}
+                        >
+                          {expiration.expired
+                            ? 'Expired'
+                            : `Expires: ${format(new Date(expiration.date), 'MMM d')}`}
+                        </span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
               <div className="flex items-center gap-2">
                 <button

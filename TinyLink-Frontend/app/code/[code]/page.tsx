@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, ExternalLink, Copy, Calendar, MousePointerClick, TrendingUp, Monitor, Smartphone, Tablet } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Copy, Calendar, MousePointerClick, TrendingUp, Monitor, Smartphone, Tablet, Clock } from 'lucide-react';
 import { format, subDays, eachDayOfInterval, parseISO } from 'date-fns';
 import { useLinkStore } from '@/store/useLinkStore';
 import { Button } from '@/components/ui/Button';
@@ -245,15 +245,21 @@ export default function StatsPage() {
             <div>
               <p className="text-sm text-gray-400 mb-1">Status</p>
               <p className="text-lg font-semibold">
-                <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-smooth ${
-                    currentLink.isActive
-                      ? 'bg-green-900/30 text-green-300 border border-green-700'
-                      : 'bg-red-900/30 text-red-300 border border-red-700'
-                  }`}
-                >
-                  {currentLink.isActive ? 'Active' : 'Inactive'}
-                </span>
+                {(() => {
+                  const isExpired = currentLink.expiresAt && new Date(currentLink.expiresAt) < new Date();
+                  const isInactive = !currentLink.isActive || isExpired;
+                  return (
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium transition-smooth ${
+                        isInactive
+                          ? 'bg-red-900/30 text-red-300 border border-red-700'
+                          : 'bg-green-900/30 text-green-300 border border-green-700'
+                      }`}
+                    >
+                      {isExpired ? 'Expired' : currentLink.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  );
+                })()}
               </p>
             </div>
             <div className="p-3 bg-primary-600/20 rounded-lg">
@@ -300,6 +306,7 @@ export default function StatsPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-primary-400 hover:text-primary-300 break-all flex items-center gap-1"
+                title={currentLink.originalUrl}
               >
                 {currentLink.originalUrl}
                 <ExternalLink className="w-4 h-4 flex-shrink-0" />
@@ -320,6 +327,36 @@ export default function StatsPage() {
               <p className="mt-1 text-gray-300">{currentLink.description}</p>
             </div>
           )}
+
+          <div>
+            <label className="text-sm font-medium text-gray-400">Expiration</label>
+            <div className="mt-1 flex items-center gap-2">
+              {currentLink.expiresAt ? (
+                <>
+                  <Clock
+                    className={`w-4 h-4 ${
+                      new Date(currentLink.expiresAt) < new Date()
+                        ? 'text-red-400'
+                        : 'text-yellow-400'
+                    }`}
+                  />
+                  <span
+                    className={
+                      new Date(currentLink.expiresAt) < new Date()
+                        ? 'text-red-400'
+                        : 'text-yellow-400'
+                    }
+                  >
+                    {new Date(currentLink.expiresAt) < new Date()
+                      ? `Expired on ${format(new Date(currentLink.expiresAt), 'MMM d, yyyy HH:mm')}`
+                      : `Expires on ${format(new Date(currentLink.expiresAt), 'MMM d, yyyy HH:mm')}`}
+                  </span>
+                </>
+              ) : (
+                <span className="text-gray-500">Never expires</span>
+              )}
+            </div>
+          </div>
               </div>
             </div>
 

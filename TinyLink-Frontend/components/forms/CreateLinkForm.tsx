@@ -16,6 +16,7 @@ export const CreateLinkForm: React.FC<CreateLinkFormProps> = ({ onSuccess }) => 
     shortCode: '',
     title: '',
     description: '',
+    expiresAt: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
@@ -57,11 +58,26 @@ export const CreateLinkForm: React.FC<CreateLinkFormProps> = ({ onSuccess }) => 
       return;
     }
 
+    // Validate expiration date if provided
+    if (formData.expiresAt) {
+      const expirationDate = new Date(formData.expiresAt);
+      const now = new Date();
+      if (isNaN(expirationDate.getTime())) {
+        setErrors({ expiresAt: 'Invalid date format' });
+        return;
+      }
+      if (expirationDate <= now) {
+        setErrors({ expiresAt: 'Expiration date must be in the future' });
+        return;
+      }
+    }
+
     const result = await createLink({
       originalUrl: formData.originalUrl.trim(),
       shortCode: formData.shortCode.trim() || undefined,
       title: formData.title.trim() || undefined,
       description: formData.description.trim() || undefined,
+      expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : undefined,
     });
 
     if (result.success) {
@@ -71,6 +87,7 @@ export const CreateLinkForm: React.FC<CreateLinkFormProps> = ({ onSuccess }) => 
         shortCode: '',
         title: '',
         description: '',
+        expiresAt: '',
       });
       setTimeout(() => {
         setSuccess(false);
@@ -126,6 +143,15 @@ export const CreateLinkForm: React.FC<CreateLinkFormProps> = ({ onSuccess }) => 
         placeholder="Link description"
         value={formData.description}
         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+      />
+
+      <Input
+        label="Expiration Date & Time (Optional)"
+        type="datetime-local"
+        value={formData.expiresAt}
+        onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+        error={errors.expiresAt}
+        min={new Date().toISOString().slice(0, 16)}
       />
 
       <div className="flex gap-3 pt-2">

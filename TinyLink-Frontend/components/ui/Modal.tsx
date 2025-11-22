@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -18,8 +19,15 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   size = 'md',
 }) => {
+  const [mounted, setMounted] = React.useState(false);
+
   useEffect(() => {
-    if (isOpen) {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && mounted) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -27,9 +35,7 @@ export const Modal: React.FC<ModalProps> = ({
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
-
-  if (!isOpen) return null;
+  }, [isOpen, mounted]);
 
   const sizeClasses = {
     sm: 'max-w-md',
@@ -37,9 +43,11 @@ export const Modal: React.FC<ModalProps> = ({
     lg: 'max-w-2xl',
   };
 
-  return (
+  if (!isOpen || !mounted) return null;
+
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in"
       onClick={onClose}
     >
       <div
@@ -60,5 +68,7 @@ export const Modal: React.FC<ModalProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
