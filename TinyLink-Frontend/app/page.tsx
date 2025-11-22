@@ -97,7 +97,7 @@ export default function Dashboard() {
           </div>
           <Input
             type="text"
-            placeholder="Search by code, URL, or title..."
+            placeholder="Search by code, short URL, or title..."
             value={localSearch}
             onChange={handleSearchChange}
             className="pl-12"
